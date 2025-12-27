@@ -2,7 +2,10 @@
 
 import os
 
-if "PYOPENGL_PLATFORM" not in os.environ:
+# Configure PyOpenGL platform based on OS
+if "PYOPENGL_PLATFORM" not in os.environ and os.name != "nt":
+    # On Windows, don't set platform (pyrender will use default)
+    # On Linux, use EGL for headless rendering
     os.environ["PYOPENGL_PLATFORM"] = "egl"
 
 import cv2
