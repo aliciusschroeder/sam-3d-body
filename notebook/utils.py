@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from sam_3d_body import load_sam_3d_body_hf, SAM3DBodyEstimator
+from sam_3d_body import SAM3DBodyEstimator, load_sam_3d_body_hf
 from sam_3d_body.metadata.mhr70 import pose_info as mhr70_pose_info
 from sam_3d_body.visualization.renderer import Renderer
 from sam_3d_body.visualization.skeleton_visualizer import SkeletonVisualizer
@@ -20,7 +20,7 @@ LIGHT_BLUE = (0.65098039, 0.74117647, 0.85882353)
 
 def setup_sam_3d_body(
     hf_repo_id: str = "facebook/sam-3d-body-vith",
-    detector_name: str = "vitdet",
+    detector_name: str = "yolo26x",
     segmentor_name: str = "sam2",
     fov_name: str = "moge2",
     detector_path: str = "",
@@ -33,7 +33,7 @@ def setup_sam_3d_body(
 
     Args:
         hf_repo_id: HuggingFace repository ID for the model
-        detector_name: Name of detector to use (default: "vitdet")
+        detector_name: Name of detector to use (default: "yolo26x")
         segmentor_name: Name of segmentor to use (default: "sam2")
         fov_name: Name of FOV estimator to use (default: "moge2")
         detector_path: URL or path for human detector model

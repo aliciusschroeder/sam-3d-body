@@ -87,7 +87,7 @@ For a quick start, run our demo script for model inference and visualization wit
 # Download assets from HuggingFace
 hf download facebook/sam-3d-body-dinov3 --local-dir checkpoints/sam-3d-body-dinov3
 
-# Run demo script with default ViTdet detector and MoGe2 FOV model
+# Run demo script with default yolo26x detector and MoGe2 FOV model
 python demo.py \
     --image_folder <path_to_images> \
     --output_folder <path_to_output> \
