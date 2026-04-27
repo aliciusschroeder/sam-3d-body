@@ -3,7 +3,6 @@
 import numpy as np
 import torch
 from torch.utils.data import default_collate
-from typing import Optional
 
 
 class NoCollate:
@@ -18,11 +17,11 @@ def prepare_batch(
     masks=None,
     masks_score=None,
     cam_int=None,
-    # NEW: Keypoint conditioning parameters
-    keypoints_2d: Optional[np.ndarray] = None,
-    keypoints_3d: Optional[np.ndarray] = None,
-    keypoint_scores: Optional[np.ndarray] = None,
-    keypoint_format: Optional[str] = None,
+    # Keypoint conditioning parameters
+    keypoints_2d: np.ndarray | None = None,
+    keypoints_3d: np.ndarray | None = None,
+    keypoint_scores: np.ndarray | None = None,
+    keypoint_format: str | None = None,
 ):
     """
     A helper function to prepare data batch for SAM 3D Body model inference.
@@ -41,24 +40,26 @@ def prepare_batch(
     """
     height, width = img.shape[:2]
 
-    # NEW: Validate keypoint inputs if provided
+    # Validate keypoint inputs if provided
     has_keypoints = keypoints_2d is not None
     if has_keypoints:
-        assert keypoints_2d.shape[0] == boxes.shape[0], \
+        assert keypoints_2d.shape[0] == boxes.shape[0], (
             f"Number of keypoint sets ({keypoints_2d.shape[0]}) must match number of boxes ({boxes.shape[0]})"
+        )
 
         if keypoint_scores is None:
             # Default to uniform confidence if not provided
             num_keypoints = keypoints_2d.shape[1]
             keypoint_scores = np.ones((boxes.shape[0], num_keypoints), dtype=np.float32)
 
-        print(f"Preparing batch with keypoint conditioning: {keypoints_2d.shape[1]} keypoints per person (format: {keypoint_format})")
-    # END NEW
+        print(
+            f"Preparing batch with keypoint conditioning: {keypoints_2d.shape[1]} keypoints per person (format: {keypoint_format})"
+        )
 
     # construct batch data samples
     data_list = []
     for idx in range(boxes.shape[0]):
-        data_info = dict(img=img)
+        data_info = {"img": img}
         data_info["bbox"] = boxes[idx]  # shape (4,)
         data_info["bbox_format"] = "xyxy"
 
@@ -72,8 +73,10 @@ def prepare_batch(
             data_info["mask"] = np.zeros((height, width, 1), dtype=np.uint8)
             data_info["mask_score"] = np.array(0.0, dtype=np.float32)
 
-        # NEW: Add keypoint information to data_info
+        # Add keypoint information to data_info
         if has_keypoints:
+            assert keypoints_2d is not None
+            assert keypoint_scores is not None
             data_info["keypoints_2d"] = keypoints_2d[idx].copy()  # [K, 2]
             data_info["keypoint_scores"] = keypoint_scores[idx].copy()  # [K]
             data_info["has_keypoints"] = True
@@ -85,7 +88,6 @@ def prepare_batch(
                 data_info["keypoint_format"] = keypoint_format
         else:
             data_info["has_keypoints"] = False
-        # END NEW
 
         data_list.append(transform(data_info))
 
@@ -113,7 +115,7 @@ def prepare_batch(
 
     batch["person_valid"] = torch.ones((1, max_num_person))
 
-    # NEW: Handle keypoint data in batch
+    # Handle keypoint data in batch
     if has_keypoints:
         # Keypoints should be [N, K, 2] after collation, unsqueeze to [1, N, K, 2]
         if "keypoints_2d" in batch:
@@ -134,7 +136,6 @@ def prepare_batch(
             batch["keypoint_format"] = keypoint_format
     else:
         batch["has_keypoints"] = False
-    # END NEW
 
     if cam_int is not None:
         batch["cam_int"] = cam_int.to(batch["img"])

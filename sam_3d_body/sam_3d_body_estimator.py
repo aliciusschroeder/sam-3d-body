@@ -56,21 +56,20 @@ class SAM3DBodyEstimator:
     @torch.no_grad()
     def process_one_image(
         self,
-        img: Union[str, np.ndarray],
-        bboxes: Optional[np.ndarray] = None,
-        masks: Optional[np.ndarray] = None,
-        cam_int: Optional[np.ndarray] = None,
-        # NEW: Keypoint conditioning parameters
-        keypoints_2d: Optional[np.ndarray] = None,
-        keypoints_3d: Optional[np.ndarray] = None,
-        keypoint_scores: Optional[np.ndarray] = None,
-        keypoint_format: str = "coco17",
-        # END NEW
+        img: str | np.ndarray,
+        bboxes: np.ndarray | None = None,
+        masks: np.ndarray | None = None,
+        cam_int: np.ndarray | None = None,
         det_cat_id: int = 0,
         bbox_thr: float = 0.5,
         nms_thr: float = 0.3,
         use_mask: bool = False,
         inference_type: str = "full",
+        # Keypoint conditioning parameters
+        keypoints_2d: np.ndarray | None = None,
+        keypoints_3d: np.ndarray | None = None,
+        keypoint_scores: np.ndarray | None = None,
+        keypoint_format: str = "coco17",
     ):
         """
         Perform model prediction in top-down format: assuming input is a full image.
@@ -111,7 +110,7 @@ class SAM3DBodyEstimator:
             image_format = "rgb"
         height, width = img.shape[:2]
 
-        # NEW: Process keypoint inputs
+        # Process keypoint inputs
         use_keypoints = keypoints_2d is not None
         if use_keypoints:
             keypoints_2d, keypoint_scores = self._process_keypoint_inputs(
@@ -120,7 +119,6 @@ class SAM3DBodyEstimator:
             print(
                 f"Using keypoint conditioning with {keypoint_scores.shape[1]} keypoints per person (format: {keypoint_format})"
             )
-        # END NEW
 
         if bboxes is not None:
             boxes = bboxes.reshape(-1, 4)
@@ -147,11 +145,12 @@ class SAM3DBodyEstimator:
         if len(boxes) == 0:
             return []
 
-        # NEW: If keypoints are provided but no bboxes, create bboxes from keypoints
+        # If keypoints are provided but no bboxes, create bboxes from keypoints
         if use_keypoints and bboxes is None and self.detector is None:
+            assert keypoints_2d
+            assert keypoint_scores
             print("Creating bounding boxes from keypoints...")
             boxes = self._create_bboxes_from_keypoints(keypoints_2d, keypoint_scores)
-        # END NEW
 
         # The following models expect RGB images instead of BGR
         if image_format == "bgr":
@@ -178,7 +177,7 @@ class SAM3DBodyEstimator:
             masks, masks_score = None, None
 
         #################### Construct batch data samples ####################
-        # NEW: Pass keypoints to prepare_batch
+        # Pass keypoints to prepare_batch
         batch = prepare_batch(
             img,
             self.transform,
@@ -190,7 +189,6 @@ class SAM3DBodyEstimator:
             keypoint_scores=keypoint_scores if use_keypoints else None,
             keypoint_format=keypoint_format if use_keypoints else None,
         )
-        # END NEW
 
         #################### Run model inference on an image ####################
         batch = recursive_to(batch, "cuda")
@@ -292,7 +290,7 @@ class SAM3DBodyEstimator:
     def _process_keypoint_inputs(
         self,
         keypoints_2d: np.ndarray,
-        keypoint_scores: Optional[np.ndarray],
+        keypoint_scores: np.ndarray | None,
         height: int,
         width: int,
     ):
