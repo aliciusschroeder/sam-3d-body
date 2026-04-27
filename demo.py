@@ -15,9 +15,10 @@ root = pyrootutils.setup_root(
 import cv2
 import numpy as np
 import torch
-from sam_3d_body import load_sam_3d_body, SAM3DBodyEstimator
-from tools.vis_utils import visualize_sample, visualize_sample_together
 from tqdm import tqdm
+
+from sam_3d_body import SAM3DBodyEstimator, load_sam_3d_body
+from tools.vis_utils import visualize_sample_together
 
 
 def main(args):
@@ -47,8 +48,10 @@ def main(args):
         human_detector = HumanDetector(
             name=args.detector_name, device=device, path=detector_path
         )
-    
-    if (args.segmentor_name == "sam2" and len(segmentor_path)) or args.segmentor_name != "sam2":
+
+    if (
+        args.segmentor_name == "sam2" and len(segmentor_path)
+    ) or args.segmentor_name != "sam2":
         from tools.build_sam import HumanSegmentor
 
         human_segmentor = HumanSegmentor(
@@ -134,9 +137,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--detector_name",
-        default="vitdet",
+        default="yolo26x",
         type=str,
-        help="Human detection model for demo (Default `vitdet`, add your favorite detector if needed).",
+        help="Human detection model for demo (Default `yolo26x`, add your favorite detector if needed).",
     )
     parser.add_argument(
         "--segmentor_name",
