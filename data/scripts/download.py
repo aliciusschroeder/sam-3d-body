@@ -95,9 +95,9 @@ def main():
         split_files[split].append(file)
 
     if splits != "":
-        splits: List[str] = sorted(
-            [split for split in splits.split(",") if split in split_files]
-        )
+        splits: List[str] = sorted([
+            split for split in splits.split(",") if split in split_files
+        ])
     else:
         splits: List[str] = sorted(list(split_files.keys()))
 

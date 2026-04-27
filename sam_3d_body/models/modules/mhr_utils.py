@@ -168,21 +168,21 @@ def compact_cont_to_model_params_hand(hand_cont):
     hand_dofs_in_order = torch.tensor([3, 1, 1, 3, 1, 1, 3, 1, 1, 3, 1, 1, 2, 3, 1, 1])
     assert sum(hand_dofs_in_order) == 27
     # Mask of 3DoFs into hand_cont
-    mask_cont_threedofs = torch.cat(
-        [torch.ones(2 * k).bool() * (k in [3]) for k in hand_dofs_in_order]
-    )
+    mask_cont_threedofs = torch.cat([
+        torch.ones(2 * k).bool() * (k in [3]) for k in hand_dofs_in_order
+    ])
     # Mask of 1DoFs (including 2DoF) into hand_cont
-    mask_cont_onedofs = torch.cat(
-        [torch.ones(2 * k).bool() * (k in [1, 2]) for k in hand_dofs_in_order]
-    )
+    mask_cont_onedofs = torch.cat([
+        torch.ones(2 * k).bool() * (k in [1, 2]) for k in hand_dofs_in_order
+    ])
     # Mask of 3DoFs into hand_model_params
-    mask_model_params_threedofs = torch.cat(
-        [torch.ones(k).bool() * (k in [3]) for k in hand_dofs_in_order]
-    )
+    mask_model_params_threedofs = torch.cat([
+        torch.ones(k).bool() * (k in [3]) for k in hand_dofs_in_order
+    ])
     # Mask of 1DoFs (including 2DoF) into hand_model_params
-    mask_model_params_onedofs = torch.cat(
-        [torch.ones(k).bool() * (k in [1, 2]) for k in hand_dofs_in_order]
-    )
+    mask_model_params_onedofs = torch.cat([
+        torch.ones(k).bool() * (k in [1, 2]) for k in hand_dofs_in_order
+    ])
 
     # Convert hand_cont to eulers
     ## First for 3DoFs
@@ -210,21 +210,21 @@ def compact_model_params_to_cont_hand(hand_model_params):
     hand_dofs_in_order = torch.tensor([3, 1, 1, 3, 1, 1, 3, 1, 1, 3, 1, 1, 2, 3, 1, 1])
     assert sum(hand_dofs_in_order) == 27
     # Mask of 3DoFs into hand_cont
-    mask_cont_threedofs = torch.cat(
-        [torch.ones(2 * k).bool() * (k in [3]) for k in hand_dofs_in_order]
-    )
+    mask_cont_threedofs = torch.cat([
+        torch.ones(2 * k).bool() * (k in [3]) for k in hand_dofs_in_order
+    ])
     # Mask of 1DoFs (including 2DoF) into hand_cont
-    mask_cont_onedofs = torch.cat(
-        [torch.ones(2 * k).bool() * (k in [1, 2]) for k in hand_dofs_in_order]
-    )
+    mask_cont_onedofs = torch.cat([
+        torch.ones(2 * k).bool() * (k in [1, 2]) for k in hand_dofs_in_order
+    ])
     # Mask of 3DoFs into hand_model_params
-    mask_model_params_threedofs = torch.cat(
-        [torch.ones(k).bool() * (k in [3]) for k in hand_dofs_in_order]
-    )
+    mask_model_params_threedofs = torch.cat([
+        torch.ones(k).bool() * (k in [3]) for k in hand_dofs_in_order
+    ])
     # Mask of 1DoFs (including 2DoF) into hand_model_params
-    mask_model_params_onedofs = torch.cat(
-        [torch.ones(k).bool() * (k in [1, 2]) for k in hand_dofs_in_order]
-    )
+    mask_model_params_onedofs = torch.cat([
+        torch.ones(k).bool() * (k in [1, 2]) for k in hand_dofs_in_order
+    ])
 
     # Convert eulers to hand_cont hand_cont
     ## First for 3DoFs
@@ -305,9 +305,9 @@ def compact_cont_to_rotmat_body(body_pose_cont, inflate_trans=False):
     body_cont_1dofs = body_cont_1dofs.unflatten(-1, (-1, 2))  # (sincos)
     body_rotmat_1dofs = batch4Dfrom2D(body_cont_1dofs).flatten(-2, -1)
     if inflate_trans:
-        assert (
-            False
-        ), "This is left as a possibility to increase the space/contribution/supervision trans params gets compared to rots"
+        assert False, (
+            "This is left as a possibility to increase the space/contribution/supervision trans params gets compared to rots"
+        )
     else:
         ## Nothing to do for trans
         body_rotmat_trans = body_cont_trans

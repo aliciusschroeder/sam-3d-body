@@ -273,7 +273,7 @@ class TopdownAffine(nn.Module):
         if results["bbox_center"].ndim == 2:
             assert results["bbox_center"].shape[0] == 1, (
                 "Only support cropping one instance at a time. Got invalid "
-                f'shape of bbox_center {results["bbox_center"].shape}.'
+                f"shape of bbox_center {results['bbox_center'].shape}."
             )
             center = results["bbox_center"][0]
             scale = results["bbox_scale"][0]

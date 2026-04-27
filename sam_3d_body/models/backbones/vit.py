@@ -127,7 +127,8 @@ def get_abs_pos(abs_pos, h, w, ori_h, ori_w, has_cls_token=True):
 
     if ori_h != h or ori_w != w:
         new_abs_pos = (
-            F.interpolate(
+            F
+            .interpolate(
                 abs_pos.reshape(1, ori_h, ori_w, -1).permute(0, 3, 1, 2),
                 size=(h, w),
                 mode="bicubic",
@@ -288,7 +289,6 @@ class FlashAttention(nn.Module):
 
 
 class Block(nn.Module):
-
     def __init__(
         self,
         dim,
@@ -461,7 +461,6 @@ class HybridEmbed(nn.Module):
 
 
 class ViT(nn.Module):
-
     def __init__(
         self,
         img_size=224,
@@ -537,23 +536,21 @@ class ViT(nn.Module):
             x.item() for x in torch.linspace(0, drop_path_rate, depth)
         ]  # stochastic depth decay rule
 
-        self.blocks = nn.ModuleList(
-            [
-                Block(
-                    dim=embed_dim,
-                    num_heads=num_heads,
-                    mlp_ratio=mlp_ratio,
-                    qkv_bias=qkv_bias,
-                    qk_scale=qk_scale,
-                    drop=drop_rate,
-                    attn_drop=attn_drop_rate,
-                    drop_path=dpr[i],
-                    norm_layer=norm_layer,
-                    flash_attn=flash_attn,
-                )
-                for i in range(depth)
-            ]
-        )
+        self.blocks = nn.ModuleList([
+            Block(
+                dim=embed_dim,
+                num_heads=num_heads,
+                mlp_ratio=mlp_ratio,
+                qkv_bias=qkv_bias,
+                qk_scale=qk_scale,
+                drop=drop_rate,
+                attn_drop=attn_drop_rate,
+                drop_path=dpr[i],
+                norm_layer=norm_layer,
+                flash_attn=flash_attn,
+            )
+            for i in range(depth)
+        ])
 
         self.last_norm = norm_layer(embed_dim) if last_norm else nn.Identity()
 

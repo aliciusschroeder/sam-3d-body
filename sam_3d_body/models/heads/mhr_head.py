@@ -34,7 +34,6 @@ except:
 
 
 class MHRHead(nn.Module):
-
     def __init__(
         self,
         input_dim: int,

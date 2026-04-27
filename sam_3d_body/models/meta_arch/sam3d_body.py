@@ -593,9 +593,7 @@ class SAM3DBody(BaseModel):
             else:
                 image_augment = self.hand_pe_layer(
                     image_embeddings.shape[-2:]
-                ).unsqueeze(
-                    0
-                )  # (1, C, H, W)
+                ).unsqueeze(0)  # (1, C, H, W)
 
             image_embeddings = self.ray_cond_emb_hand(
                 image_embeddings, batch["ray_cond_hand"]
@@ -880,12 +878,10 @@ class SAM3DBody(BaseModel):
             pose_output = pose_output[-1]
 
         # Update prediction output
-        output.update(
-            {
-                "mhr": pose_output,
-                "mhr_hand": pose_output_hand,
-            }
-        )
+        output.update({
+            "mhr": pose_output,
+            "mhr_hand": pose_output_hand,
+        })
 
         return output, keypoint_prompt
 
@@ -1027,7 +1023,8 @@ class SAM3DBody(BaseModel):
     def get_ray_condition(self, batch):
         B, N, _, H, W = batch["img"].shape
         meshgrid_xy = (
-            torch.stack(
+            torch
+            .stack(
                 torch.meshgrid(torch.arange(H), torch.arange(W), indexing="xy"), dim=2
             )[None, None, :, :, :]
             .repeat(B, N, 1, 1, 1)
@@ -1618,9 +1615,9 @@ class SAM3DBody(BaseModel):
             pose_output["mhr"]["pred_keypoints_3d"] = j3d
             pose_output["mhr"]["pred_vertices"] = verts
             pose_output["mhr"]["pred_joint_coords"] = jcoords
-            pose_output["mhr"]["pred_pose_raw"][
-                ...
-            ] = 0  # pred_pose_raw is not valid anymore
+            pose_output["mhr"]["pred_pose_raw"][...] = (
+                0  # pred_pose_raw is not valid anymore
+            )
             pose_output["mhr"]["mhr_model_params"] = mhr_model_params
 
         ########################################################
@@ -1826,7 +1823,8 @@ class SAM3DBody(BaseModel):
 
         # Version 2 is projecting & bilinear sampling
         pred_keypoints_2d_cropped_feats = (
-            F.grid_sample(
+            F
+            .grid_sample(
                 image_embeddings,
                 pred_keypoints_2d_cropped_sample_points[:, :, None, :],  # -1 ~ 1, xy
                 mode="bilinear",
@@ -1960,7 +1958,8 @@ class SAM3DBody(BaseModel):
 
         # Version 2 is projecting & bilinear sampling
         pred_keypoints_2d_cropped_feats = (
-            F.grid_sample(
+            F
+            .grid_sample(
                 image_embeddings,
                 pred_keypoints_2d_cropped_sample_points[:, :, None, :],  # -1 ~ 1, xy
                 mode="bilinear",

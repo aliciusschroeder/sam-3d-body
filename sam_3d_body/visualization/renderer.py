@@ -57,7 +57,8 @@ def make_4x4_pose(R, t):
     dims = R.shape[:-2]
     pose_3x4 = torch.cat([R, t.view(*dims, 3, 1)], dim=-1)
     bottom = (
-        torch.tensor([0, 0, 0, 1], device=R.device)
+        torch
+        .tensor([0, 0, 0, 1], device=R.device)
         .reshape(*(1,) * len(dims), 1, 4)
         .expand(*dims, 1, 4)
     )
@@ -132,7 +133,6 @@ def create_raymond_lights() -> List[pyrender.Node]:
 
 
 class Renderer:
-
     def __init__(self, focal_length, faces=None):
         """
         Wrapper around the pyrender renderer to render meshes.
@@ -311,9 +311,11 @@ class Renderer:
             camera_translation = cam_t.copy()
             # camera_translation[0] *= -1.
         else:
-            camera_translation = np.array(
-                [0, 0, camera_z * self.focal_length / render_res[1]]
-            )
+            camera_translation = np.array([
+                0,
+                0,
+                camera_z * self.focal_length / render_res[1],
+            ])
 
         mesh = self.vertices_to_trimesh(
             vertices, camera_translation, mesh_base_color, rot_axis, rot_angle

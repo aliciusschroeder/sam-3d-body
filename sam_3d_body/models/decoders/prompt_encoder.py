@@ -38,9 +38,9 @@ class PromptEncoder(nn.Module):
 
         # Keypoint prompts
         self.pe_layer = PositionEmbeddingRandom(embed_dim // 2)
-        self.point_embeddings = nn.ModuleList(
-            [nn.Embedding(1, embed_dim) for _ in range(self.num_body_joints)]
-        )
+        self.point_embeddings = nn.ModuleList([
+            nn.Embedding(1, embed_dim) for _ in range(self.num_body_joints)
+        ])
         self.not_a_point_embed = nn.Embedding(1, embed_dim)
         self.invalid_point_embed = nn.Embedding(1, embed_dim)
 

@@ -134,13 +134,11 @@ def rot_aa(aa: np.array, rot: float) -> np.array:
         np.array: Rotated axis-angle vector.
     """
     # pose parameters
-    R = np.array(
-        [
-            [np.cos(np.deg2rad(-rot)), -np.sin(np.deg2rad(-rot)), 0],
-            [np.sin(np.deg2rad(-rot)), np.cos(np.deg2rad(-rot)), 0],
-            [0, 0, 1],
-        ]
-    )
+    R = np.array([
+        [np.cos(np.deg2rad(-rot)), -np.sin(np.deg2rad(-rot)), 0],
+        [np.sin(np.deg2rad(-rot)), np.cos(np.deg2rad(-rot)), 0],
+        [0, 0, 1],
+    ])
     # find the rotation of the body in camera frame
     per_rdg, _ = cv2.Rodrigues(aa)
     # apply the global rotation to the global orientation

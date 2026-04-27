@@ -251,7 +251,8 @@ class MultiheadAttention(nn.Module):
     def forward(self, x):
         B, N, _ = x.shape
         qkv = (
-            self.qkv(x)
+            self
+            .qkv(x)
             .reshape(B, N, 3, self.num_heads, self.head_dims)
             .permute(2, 0, 3, 1, 4)
         )

@@ -45,20 +45,16 @@ class SAM3DBodyEstimator:
         if self.fov_estimator is None:
             print("No FOV estimator... Using the default FOV!")
 
-        self.transform = Compose(
-            [
-                GetBBoxCenterScale(),
-                TopdownAffine(input_size=self.cfg.MODEL.IMAGE_SIZE, use_udp=False),
-                VisionTransformWrapper(ToTensor()),
-            ]
-        )
-        self.transform_hand = Compose(
-            [
-                GetBBoxCenterScale(padding=0.9),
-                TopdownAffine(input_size=self.cfg.MODEL.IMAGE_SIZE, use_udp=False),
-                VisionTransformWrapper(ToTensor()),
-            ]
-        )
+        self.transform = Compose([
+            GetBBoxCenterScale(),
+            TopdownAffine(input_size=self.cfg.MODEL.IMAGE_SIZE, use_udp=False),
+            VisionTransformWrapper(ToTensor()),
+        ])
+        self.transform_hand = Compose([
+            GetBBoxCenterScale(padding=0.9),
+            TopdownAffine(input_size=self.cfg.MODEL.IMAGE_SIZE, use_udp=False),
+            VisionTransformWrapper(ToTensor()),
+        ])
 
     @torch.no_grad()
     def process_one_image(
@@ -138,9 +134,9 @@ class SAM3DBodyEstimator:
         if masks is not None:
             # Use provided masks - ensure they match the number of detected boxes
             print(f"Using provided masks: {masks.shape}")
-            assert (
-                bboxes is not None
-            ), "Mask-conditioned inference requires bboxes input!"
+            assert bboxes is not None, (
+                "Mask-conditioned inference requires bboxes input!"
+            )
             masks = masks.reshape(-1, height, width, 1).astype(np.uint8)
             masks_score = np.ones(
                 len(masks), dtype=np.float32
@@ -193,68 +189,62 @@ class SAM3DBodyEstimator:
         out = recursive_to(out, "numpy")
         all_out = []
         for idx in range(batch["img"].shape[1]):
-            all_out.append(
-                {
-                    "bbox": batch["bbox"][0, idx].cpu().numpy(),
-                    "focal_length": out["focal_length"][idx],
-                    "pred_keypoints_3d": out["pred_keypoints_3d"][idx],
-                    "pred_keypoints_2d": out["pred_keypoints_2d"][idx],
-                    "pred_vertices": out["pred_vertices"][idx],
-                    "pred_cam_t": out["pred_cam_t"][idx],
-                    "pred_pose_raw": out["pred_pose_raw"][idx],
-                    "global_rot": out["global_rot"][idx],
-                    "body_pose_params": out["body_pose"][idx],
-                    "hand_pose_params": out["hand"][idx],
-                    "scale_params": out["scale"][idx],
-                    "shape_params": out["shape"][idx],
-                    "expr_params": out["face"][idx],
-                    "mask": masks[idx] if masks is not None else None,
-                    "pred_joint_coords": out["pred_joint_coords"][idx],
-                    "pred_global_rots": out["joint_global_rots"][idx],
-                    "mhr_model_params": out["mhr_model_params"][idx],
-                }
-            )
+            all_out.append({
+                "bbox": batch["bbox"][0, idx].cpu().numpy(),
+                "focal_length": out["focal_length"][idx],
+                "pred_keypoints_3d": out["pred_keypoints_3d"][idx],
+                "pred_keypoints_2d": out["pred_keypoints_2d"][idx],
+                "pred_vertices": out["pred_vertices"][idx],
+                "pred_cam_t": out["pred_cam_t"][idx],
+                "pred_pose_raw": out["pred_pose_raw"][idx],
+                "global_rot": out["global_rot"][idx],
+                "body_pose_params": out["body_pose"][idx],
+                "hand_pose_params": out["hand"][idx],
+                "scale_params": out["scale"][idx],
+                "shape_params": out["shape"][idx],
+                "expr_params": out["face"][idx],
+                "mask": masks[idx] if masks is not None else None,
+                "pred_joint_coords": out["pred_joint_coords"][idx],
+                "pred_global_rots": out["joint_global_rots"][idx],
+                "mhr_model_params": out["mhr_model_params"][idx],
+            })
 
             if inference_type == "full":
-                all_out[-1]["lhand_bbox"] = np.array(
-                    [
-                        (
-                            batch_lhand["bbox_center"].flatten(0, 1)[idx][0]
-                            - batch_lhand["bbox_scale"].flatten(0, 1)[idx][0] / 2
-                        ).item(),
-                        (
-                            batch_lhand["bbox_center"].flatten(0, 1)[idx][1]
-                            - batch_lhand["bbox_scale"].flatten(0, 1)[idx][1] / 2
-                        ).item(),
-                        (
-                            batch_lhand["bbox_center"].flatten(0, 1)[idx][0]
-                            + batch_lhand["bbox_scale"].flatten(0, 1)[idx][0] / 2
-                        ).item(),
-                        (
-                            batch_lhand["bbox_center"].flatten(0, 1)[idx][1]
-                            + batch_lhand["bbox_scale"].flatten(0, 1)[idx][1] / 2
-                        ).item(),
-                    ]
-                )
-                all_out[-1]["rhand_bbox"] = np.array(
-                    [
-                        (
-                            batch_rhand["bbox_center"].flatten(0, 1)[idx][0]
-                            - batch_rhand["bbox_scale"].flatten(0, 1)[idx][0] / 2
-                        ).item(),
-                        (
-                            batch_rhand["bbox_center"].flatten(0, 1)[idx][1]
-                            - batch_rhand["bbox_scale"].flatten(0, 1)[idx][1] / 2
-                        ).item(),
-                        (
-                            batch_rhand["bbox_center"].flatten(0, 1)[idx][0]
-                            + batch_rhand["bbox_scale"].flatten(0, 1)[idx][0] / 2
-                        ).item(),
-                        (
-                            batch_rhand["bbox_center"].flatten(0, 1)[idx][1]
-                            + batch_rhand["bbox_scale"].flatten(0, 1)[idx][1] / 2
-                        ).item(),
-                    ]
-                )
+                all_out[-1]["lhand_bbox"] = np.array([
+                    (
+                        batch_lhand["bbox_center"].flatten(0, 1)[idx][0]
+                        - batch_lhand["bbox_scale"].flatten(0, 1)[idx][0] / 2
+                    ).item(),
+                    (
+                        batch_lhand["bbox_center"].flatten(0, 1)[idx][1]
+                        - batch_lhand["bbox_scale"].flatten(0, 1)[idx][1] / 2
+                    ).item(),
+                    (
+                        batch_lhand["bbox_center"].flatten(0, 1)[idx][0]
+                        + batch_lhand["bbox_scale"].flatten(0, 1)[idx][0] / 2
+                    ).item(),
+                    (
+                        batch_lhand["bbox_center"].flatten(0, 1)[idx][1]
+                        + batch_lhand["bbox_scale"].flatten(0, 1)[idx][1] / 2
+                    ).item(),
+                ])
+                all_out[-1]["rhand_bbox"] = np.array([
+                    (
+                        batch_rhand["bbox_center"].flatten(0, 1)[idx][0]
+                        - batch_rhand["bbox_scale"].flatten(0, 1)[idx][0] / 2
+                    ).item(),
+                    (
+                        batch_rhand["bbox_center"].flatten(0, 1)[idx][1]
+                        - batch_rhand["bbox_scale"].flatten(0, 1)[idx][1] / 2
+                    ).item(),
+                    (
+                        batch_rhand["bbox_center"].flatten(0, 1)[idx][0]
+                        + batch_rhand["bbox_scale"].flatten(0, 1)[idx][0] / 2
+                    ).item(),
+                    (
+                        batch_rhand["bbox_center"].flatten(0, 1)[idx][1]
+                        + batch_rhand["bbox_scale"].flatten(0, 1)[idx][1] / 2
+                    ).item(),
+                ])
 
         return all_out

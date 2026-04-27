@@ -79,13 +79,11 @@ def main(args):
         "*.tiff",
         "*.webp",
     ]
-    images_list = sorted(
-        [
-            image
-            for ext in image_extensions
-            for image in glob(os.path.join(args.image_folder, ext))
-        ]
-    )
+    images_list = sorted([
+        image
+        for ext in image_extensions
+        for image in glob(os.path.join(args.image_folder, ext))
+    ])
 
     for image_path in tqdm(images_list):
         outputs = estimator.process_one_image(

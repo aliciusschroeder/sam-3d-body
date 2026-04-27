@@ -37,13 +37,11 @@ def save_frames(cam_name: str, src_dir: str, dst_dir: str, scale: float):
         except:
             pass
 
-    img_files = sorted(
-        [
-            img_file
-            for img_file in os.listdir(src_cam_img_dir)
-            if img_file.endswith(".jpg") and img_file.startswith("0")
-        ]
-    )
+    img_files = sorted([
+        img_file
+        for img_file in os.listdir(src_cam_img_dir)
+        if img_file.endswith(".jpg") and img_file.startswith("0")
+    ])
     for _, frame_file in enumerate(tqdm(img_files), start=1):
         frame_idx = int(frame_file[:5])
         src_img_file = os.path.join(src_cam_img_dir, frame_file)
@@ -81,9 +79,9 @@ def undistort_exocam_info(image, intrinsics, distortion_coeffs, scale=1):
     DIM = image.shape[:2][::-1]  # dim1 is the dimension of input image to un-distort
     dim1 = (int(DIM[0] * scale), int(DIM[1] * scale))
 
-    assert (
-        dim1[0] / dim1[1] == DIM[0] / DIM[1]
-    ), "Image to undistort needs to have same aspect ratio as the ones used in calibration"
+    assert dim1[0] / dim1[1] == DIM[0] / DIM[1], (
+        "Image to undistort needs to have same aspect ratio as the ones used in calibration"
+    )
     if not dim2:
         dim2 = dim1
     if not dim3:
@@ -114,9 +112,9 @@ def undistort_exocam(image, intrinsics, distortion_coeffs, scale=1):
     DIM = image.shape[:2][::-1]  # dim1 is the dimension of input image to un-distort
     dim1 = (int(DIM[0] * scale), int(DIM[1] * scale))
 
-    assert (
-        dim1[0] / dim1[1] == DIM[0] / DIM[1]
-    ), "Image to undistort needs to have same aspect ratio as the ones used in calibration"
+    assert dim1[0] / dim1[1] == DIM[0] / DIM[1], (
+        "Image to undistort needs to have same aspect ratio as the ones used in calibration"
+    )
     if not dim2:
         dim2 = dim1
     if not dim3:
