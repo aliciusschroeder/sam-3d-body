@@ -1,25 +1,11 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 
-import os
 import time
-from typing import Any, List
+from typing import Any
 
-import braceexpand
 import cv2
 import numpy as np
-
 from PIL import Image
-
-
-def expand(s):
-    return os.path.expanduser(os.path.expandvars(s))
-
-
-def expand_urls(urls: str | List[str]):
-    if isinstance(urls, str):
-        urls = [urls]
-    urls = [u for url in urls for u in braceexpand.braceexpand(expand(url))]
-    return urls
 
 
 def load_image_from_file(

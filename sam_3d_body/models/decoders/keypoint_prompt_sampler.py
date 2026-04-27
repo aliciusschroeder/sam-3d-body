@@ -6,8 +6,6 @@ from typing import Dict, List
 
 import torch
 
-from omegaconf import DictConfig
-
 
 def build_keypoint_sampler(sampler_cfg, prompt_keypoints, keybody_idx):
     sampler_type = sampler_cfg.get("TYPE", "v1")
@@ -64,7 +62,7 @@ class BaseKeypointSampler(ABC):
 class KeypointSamplerV1(BaseKeypointSampler):
     def __init__(
         self,
-        sampler_cfg: DictConfig,
+        sampler_cfg: Dict,
         prompt_keypoints: Dict,
         keybody_idx: List,
     ):
