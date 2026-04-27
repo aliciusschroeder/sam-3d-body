@@ -7,14 +7,13 @@ from functools import partial
 from typing import Dict, Optional
 
 import torch
+import torch.nn as nn
 from yacs.config import CfgNode
 
 from ..optim.fp16_utils import convert_module_to_f16, convert_to_fp16_safe
 
-from .base_lightning_module import BaseLightningModule
 
-
-class BaseModel(BaseLightningModule):
+class BaseModel(nn.Module):
     def __init__(self, cfg: Optional[CfgNode], **kwargs):
         super().__init__()
 

@@ -1,7 +1,16 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
+import functools
 import logging
+import os
 
-from pytorch_lightning.utilities import rank_zero_only
+
+def rank_zero_only(fn):
+    @functools.wraps(fn)
+    def wrapped(*args, **kwargs):
+        if os.environ.get("RANK", "0") == "0":
+            return fn(*args, **kwargs)
+
+    return wrapped
 
 
 def get_pylogger(name=__name__) -> logging.Logger:

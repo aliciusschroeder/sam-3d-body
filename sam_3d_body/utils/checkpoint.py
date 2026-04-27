@@ -2,20 +2,11 @@
 
 from collections import namedtuple
 
-import pytorch_lightning as pl
 import torch
 
 from .logging import get_pylogger
 
 log = get_pylogger(__name__)
-
-
-class CheckpointCallback(pl.callbacks.ModelCheckpoint):
-    """Disable model checkpoint after validation to avoid DDP job hanging after resume"""
-
-    def on_validation_end(self, trainer, pl_module):
-        # Override to do nothing
-        pass
 
 
 class _IncompatibleKeys(

@@ -5,8 +5,6 @@ from typing import Dict, Optional, Union
 
 import cv2
 import numpy as np
-from detectron2.config import LazyConfig
-from omegaconf import OmegaConf
 
 
 def draw_text(
@@ -184,10 +182,12 @@ def parse_pose_metainfo(metainfo: Union[str, Dict]):
         - "sigmas" (numpy.ndarray): Same as the ``"sigmas"`` in the input
     """
 
-    if type(metainfo) == str:
+    if isinstance(metainfo, str):
         if not os.path.isfile(metainfo):
             raise ValueError("Invalid metainfo file path: ", metainfo)
-        metainfo = OmegaConf.to_container(LazyConfig.load(metainfo).pose_info)
+        # metainfo = OmegaConf.to_container(LazyConfig.load(metainfo).pose_info)
+        # TODO: Implement parsing metainfo from file-path instead of dict
+        raise NotImplementedError("Parsing metainfo from file-path not implemented yet")
 
     # check data integrity
     assert "pose_format" in metainfo
