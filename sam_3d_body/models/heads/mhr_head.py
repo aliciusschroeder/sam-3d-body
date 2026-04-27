@@ -2,11 +2,10 @@
 
 import os
 import warnings
-from typing import Optional
 
 import roma
 import torch
-import torch.nn as nn
+from torch import nn
 
 from ..modules import rot6d_to_rotmat
 from ..modules.mhr_utils import (
@@ -15,7 +14,6 @@ from ..modules.mhr_utils import (
     compact_model_params_to_cont_body,
     mhr_param_hand_mask,
 )
-
 from ..modules.transformer import FFN
 
 MOMENTUM_ENABLED = os.environ.get("MOMENTUM_ENABLED") is None
@@ -270,7 +268,7 @@ class MHRHead(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
-        init_estimate: Optional[torch.Tensor] = None,
+        init_estimate: torch.Tensor | None = None,
         do_pcblend=True,
         slim_keypoints=False,
     ):

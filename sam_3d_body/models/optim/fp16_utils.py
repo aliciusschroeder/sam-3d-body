@@ -1,7 +1,7 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 # FP16_TYPE = torch.float16
 

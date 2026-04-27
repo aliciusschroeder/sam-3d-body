@@ -1,10 +1,11 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 import os
+
 import torch
 
 from .models.meta_arch import SAM3DBody
-from .utils.config import get_config
 from .utils.checkpoint import load_state_dict
+from .utils.config import get_config
 
 
 def load_sam_3d_body(

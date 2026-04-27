@@ -3,23 +3,18 @@ import os
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-import _init_paths
+
+import argparse
+import os
+import warnings
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import cv2
 import numpy as np
-
-import os
-
 import pandas as pd
-from tqdm.auto import tqdm
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from typing import List
-
 from config import cfg
 from lib.datasets.ego_exo_scene import EgoExoScene
-import warnings
-
-import argparse
+from tqdm.auto import tqdm
 
 
 def save_frames(cam_name: str, src_dir: str, dst_dir: str, scale: float):
@@ -58,7 +53,6 @@ def save_frames(cam_name: str, src_dir: str, dst_dir: str, scale: float):
             borderMode=cv2.BORDER_CONSTANT,
         )
         cv2.imwrite(os.path.join(dst_cam_img_dir, frame_file), dst_image)
-    return
 
 
 # Loads dataframe at target path to csv
@@ -197,12 +191,12 @@ def main():
     scale: float = args.scale
 
     if seqs == "":
-        seqs: List[str] = []
+        seqs: list[str] = []
         for seq in sorted(os.listdir(src_dir)):
             for subseq in sorted(os.listdir(os.path.join(src_dir, seq))):
                 seqs.append(os.path.join(seq, subseq))
     else:
-        seqs: List[str] = seqs.split(",")
+        seqs: list[str] = seqs.split(",")
 
     for seq in seqs:
         extract_images(seq=seq, input_dir=src_dir, output_dir=dst_dir, scale=scale)

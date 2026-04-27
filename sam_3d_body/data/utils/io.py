@@ -47,15 +47,15 @@ def load_image(
         elif backend == "cv2":
             img = _cv2_load(path, image_format)
         else:
-            raise ValueError("Invalid backend {} for loading image.".format(backend))
+            raise ValueError(f"Invalid backend {backend} for loading image.")
 
         if img is not None:
             return img
         else:
-            print("Reading {} failed. Will retry.".format(path))
+            print(f"Reading {path} failed. Will retry.")
             time.sleep(1.0)
         if i_try == retry - 1:
-            raise Exception("Failed to load image {}".format(path))
+            raise Exception(f"Failed to load image {path}")
 
 
 def resize_image(img, target_size, center=None, scale=None):

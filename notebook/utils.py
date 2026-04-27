@@ -3,7 +3,7 @@ Utility functions for SAM 3D Body demo notebook
 """
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import cv2
 import matplotlib.pyplot as plt
@@ -85,7 +85,7 @@ def setup_sam_3d_body(
         fov_estimator=fov_estimator,
     )
 
-    print(f"Setup complete!")
+    print("Setup complete!")
     print(
         f"  Human detector: {'✓' if human_detector else '✗ (will use full image or manual bbox)'}"
     )
@@ -105,8 +105,8 @@ def setup_visualizer():
 
 
 def visualize_2d_results(
-    img_cv2: np.ndarray, outputs: List[Dict[str, Any]], visualizer: SkeletonVisualizer
-) -> List[np.ndarray]:
+    img_cv2: np.ndarray, outputs: list[dict[str, Any]], visualizer: SkeletonVisualizer
+) -> list[np.ndarray]:
     """Visualize 2D keypoints and bounding boxes"""
     results = []
 
@@ -147,8 +147,8 @@ def visualize_2d_results(
 
 
 def visualize_3d_mesh(
-    img_cv2: np.ndarray, outputs: List[Dict[str, Any]], faces: np.ndarray
-) -> List[np.ndarray]:
+    img_cv2: np.ndarray, outputs: list[dict[str, Any]], faces: np.ndarray
+) -> list[np.ndarray]:
     """Visualize 3D mesh overlaid on image and side view"""
     results = []
 
@@ -208,11 +208,11 @@ def visualize_3d_mesh(
 
 def save_mesh_results(
     img_cv2: np.ndarray,
-    outputs: List[Dict[str, Any]],
+    outputs: list[dict[str, Any]],
     faces: np.ndarray,
     save_dir: str,
     image_name: str,
-) -> List[str]:
+) -> list[str]:
     """Save 3D mesh results to files and return PLY file paths"""
     import json
 
@@ -276,7 +276,7 @@ def save_mesh_results(
 
 
 def display_results_grid(
-    images: List[np.ndarray], titles: List[str], figsize_per_image: tuple = (6, 6)
+    images: list[np.ndarray], titles: list[str], figsize_per_image: tuple = (6, 6)
 ):
     """Display multiple images in a grid"""
     n_images = len(images)

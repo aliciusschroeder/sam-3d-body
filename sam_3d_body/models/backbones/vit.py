@@ -3,9 +3,9 @@
 from functools import partial
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.utils.checkpoint as checkpoint
+from torch import nn
+from torch.utils import checkpoint
 
 try:
     from flash_attn.flash_attn_interface import flash_attn_func
@@ -150,14 +150,14 @@ class DropPath(nn.Module):
     """Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks)."""
 
     def __init__(self, drop_prob=None):
-        super(DropPath, self).__init__()
+        super().__init__()
         self.drop_prob = drop_prob
 
     def forward(self, x):
         return drop_path(x, self.drop_prob, self.training)
 
     def extra_repr(self):
-        return "p={}".format(self.drop_prob)
+        return f"p={self.drop_prob}"
 
 
 class Mlp(nn.Module):
@@ -489,7 +489,7 @@ class ViT(nn.Module):
         no_patch_padding=False,
     ):
         # Protect mutable default arguments
-        super(ViT, self).__init__()
+        super().__init__()
         norm_layer = norm_layer or partial(nn.LayerNorm, eps=1e-6)
         self.num_classes = num_classes
         self.num_features = self.embed_dim = self.embed_dims = (
@@ -573,7 +573,7 @@ class ViT(nn.Module):
                 param.requires_grad = False
 
         if self.freeze_attn:
-            for i in range(0, self.depth):
+            for i in range(self.depth):
                 m = self.blocks[i]
                 m.attn.eval()
                 m.norm1.eval()
@@ -587,7 +587,7 @@ class ViT(nn.Module):
             self.patch_embed.eval()
             for param in self.patch_embed.parameters():
                 param.requires_grad = False
-            for i in range(0, self.depth):
+            for i in range(self.depth):
                 m = self.blocks[i]
                 m.mlp.eval()
                 m.norm2.eval()

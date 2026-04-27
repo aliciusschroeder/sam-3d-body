@@ -3,19 +3,20 @@ import os
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-import pandas as pd
-import webdataset as wds
-from typing import List, Any, Dict
-import numpy as np
-import cv2
-from tqdm import tqdm
-from concurrent.futures import ProcessPoolExecutor, as_completed
+import argparse
 import re
 import warnings
-import argparse
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from typing import Any
+
+import cv2
+import numpy as np
+import pandas as pd
+import webdataset as wds
+from tqdm import tqdm
 
 
-def get_anno_key(row: Dict[str, Any]):
+def get_anno_key(row: dict[str, Any]):
     dataset = row["dataset"]
     img_name = row["image"]
     if dataset == "egoexo4d" or dataset == "harmony4d":
@@ -36,7 +37,7 @@ def get_anno_key(row: Dict[str, Any]):
         raise NotImplementedError
 
 
-def get_img_name(row: Dict[str, Any]):
+def get_img_name(row: dict[str, Any]):
     dataset = row["dataset"]
     img_name = row["image"]
     if dataset == "coco":
@@ -70,7 +71,7 @@ def create_webdatset_shard(
         subject_idx = row["subject_idx"]
         subject_cnt = row["subject_cnt"]
         if subject_idx == 0:
-            img_anno: Dict[str, Any] = {}
+            img_anno: dict[str, Any] = {}
             img_anno["__key__"] = get_anno_key(row)
             img_name = get_img_name(row)
             img = cv2.imread(os.path.join(img_dir, img_name))
@@ -83,7 +84,7 @@ def create_webdatset_shard(
         anno["keypoints_2d"] = np.stack(row["keypoints_2d"])
         anno["keypoints_3d"] = np.stack(row["keypoints_3d"])
 
-        mhr_params: Dict[str, np.ndarray] = {}
+        mhr_params: dict[str, np.ndarray] = {}
         mhr_params["model_params"] = row["model_params"]
         mhr_params["shape_params"] = row["shape_params"]
         anno["mhr_params"] = mhr_params
@@ -97,7 +98,7 @@ def create_webdatset_shard(
         anno["center"] = row["bbox_center"]
         anno["scale"] = np.array(row["bbox_scale"])
 
-        metadata: Dict[str, Any] = {}
+        metadata: dict[str, Any] = {}
         metadata["cam_int"] = np.stack(row["cam_int"])
         metadata["loss"] = row.get("loss", 0.0)
         anno["metadata"] = metadata
@@ -121,7 +122,7 @@ def create_webdataset_shard_multiprocess(
     img_dir: str,
     ann_dir: str,
     wds_dir: str,
-    files: List[str],
+    files: list[str],
     max_workers: int,
 ) -> None:
     """Parallel download without returning results."""
@@ -186,7 +187,7 @@ def main():
 
     if shard_idxs != "":
         shard_idxs = sorted([int(shard_idx) for shard_idx in shard_idxs.split(",")])
-        files: List[str] = [f"{shard_idx:06}.parquet" for shard_idx in shard_idxs]
+        files: list[str] = [f"{shard_idx:06}.parquet" for shard_idx in shard_idxs]
     else:
         pattern = re.compile(r"^\d{6}\.parquet$")
         files = sorted([file for file in os.listdir(ann_dir) if pattern.match(file)])

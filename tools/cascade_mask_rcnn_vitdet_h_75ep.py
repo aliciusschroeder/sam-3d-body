@@ -26,12 +26,12 @@ dataloader.test.mapper.augmentations = [
 ]
 
 from functools import partial
-from fvcore.common.param_scheduler import MultiStepParamScheduler
 
 from detectron2 import model_zoo
 from detectron2.config import LazyCall as L
-from detectron2.solver import WarmupParamScheduler
 from detectron2.modeling.backbone.vit import get_vit_lr_decay_rate
+from detectron2.solver import WarmupParamScheduler
+from fvcore.common.param_scheduler import MultiStepParamScheduler
 
 # mask_rcnn_vitdet_b_100ep.py
 
@@ -72,9 +72,9 @@ from detectron2.layers import ShapeSpec
 from detectron2.modeling.box_regression import Box2BoxTransform
 from detectron2.modeling.matcher import Matcher
 from detectron2.modeling.roi_heads import (
-    FastRCNNOutputLayers,
-    FastRCNNConvFCHead,
     CascadeROIHeads,
+    FastRCNNConvFCHead,
+    FastRCNNOutputLayers,
 )
 
 # arguments that don't exist for Cascade R-CNN
@@ -121,7 +121,7 @@ model.backbone.net.num_heads = 16
 model.backbone.net.drop_path_rate = 0.5
 # 7, 15, 23, 31 for global attention
 model.backbone.net.window_block_indexes = (
-    list(range(0, 7)) + list(range(8, 15)) + list(range(16, 23)) + list(range(24, 31))
+    list(range(7)) + list(range(8, 15)) + list(range(16, 23)) + list(range(24, 31))
 )
 
 optimizer.params.lr_factor_func = partial(

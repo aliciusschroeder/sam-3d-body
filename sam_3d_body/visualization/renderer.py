@@ -4,7 +4,6 @@ import os
 
 if "PYOPENGL_PLATFORM" not in os.environ:
     os.environ["PYOPENGL_PLATFORM"] = "egl"
-from typing import List, Optional
 
 import cv2
 import numpy as np
@@ -98,7 +97,7 @@ def rotz(theta):
     )
 
 
-def create_raymond_lights() -> List[pyrender.Node]:
+def create_raymond_lights() -> list[pyrender.Node]:
     """
     Return raymond light nodes for the scene.
     """
@@ -150,7 +149,7 @@ class Renderer:
         cam_t: np.array,
         image: np.ndarray,
         full_frame: bool = False,
-        imgname: Optional[str] = None,
+        imgname: str | None = None,
         side_view=False,
         top_view=False,
         rot_angle=90,
@@ -357,8 +356,8 @@ class Renderer:
 
     def render_rgba_multiple(
         self,
-        vertices: List[np.array],
-        cam_t: List[np.array],
+        vertices: list[np.array],
+        cam_t: list[np.array],
         rot_axis=[1, 0, 0],
         rot_angle=0,
         mesh_base_color=(1.0, 1.0, 0.9),

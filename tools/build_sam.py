@@ -1,7 +1,7 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 
-import torch
 import numpy as np
+import torch
 from PIL import Image
 
 
@@ -41,8 +41,8 @@ def load_sam2(device, path):
 
 
 def load_sam3(device, path):
-    from sam3.model_builder import build_sam3_image_model
     from sam3.model.sam3_image_processor import Sam3Processor
+    from sam3.model_builder import build_sam3_image_model
 
     model = build_sam3_image_model()
     predictor = Sam3Processor(model)

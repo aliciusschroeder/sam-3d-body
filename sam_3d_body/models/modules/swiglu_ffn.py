@@ -1,13 +1,11 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 
-from typing import Optional
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from .drop_path import DropPath
-
 from .layer_scale import LayerScale
 
 
@@ -15,13 +13,13 @@ class SwiGLUFFN(nn.Module):
     """SwiGLU FFN layer.
 
     Modified from https://github.com/facebookresearch/dinov2/blob/main/dinov2/layers/swiglu_ffn.py
-    """  # noqa
+    """
 
     def __init__(
         self,
         embed_dims: int,
-        feedforward_channels: Optional[int] = None,
-        out_dims: Optional[int] = None,
+        feedforward_channels: int | None = None,
+        out_dims: int | None = None,
         layer_scale_init_value: float = 0.0,
         bias: bool = True,
         drop_path_rate: float = 0.0,
@@ -50,7 +48,7 @@ class SwiGLUFFN(nn.Module):
         self.add_identity = add_identity
 
     def forward(
-        self, x: torch.Tensor, identity: Optional[torch.Tensor] = None
+        self, x: torch.Tensor, identity: torch.Tensor | None = None
     ) -> torch.Tensor:
         x12 = self.w12(x)
         x1, x2 = x12.chunk(2, dim=-1)
@@ -74,13 +72,13 @@ class SwiGLUFFNFused(SwiGLUFFN):
     """SwiGLU FFN layer with fusing.
 
     Modified from https://github.com/facebookresearch/dinov2/blob/main/dinov2/layers/swiglu_ffn.py
-    """  # noqa
+    """
 
     def __init__(
         self,
         embed_dims: int,
-        feedforward_channels: Optional[int] = None,
-        out_dims: Optional[int] = None,
+        feedforward_channels: int | None = None,
+        out_dims: int | None = None,
         layer_scale_init_value: float = 0.0,
         bias: bool = True,
     ) -> None:

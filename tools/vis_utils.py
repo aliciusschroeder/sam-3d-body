@@ -1,9 +1,10 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
-import numpy as np
 import cv2
+import numpy as np
+
+from sam_3d_body.metadata.mhr70 import pose_info as mhr70_pose_info
 from sam_3d_body.visualization.renderer import Renderer
 from sam_3d_body.visualization.skeleton_visualizer import SkeletonVisualizer
-from sam_3d_body.metadata.mhr70 import pose_info as mhr70_pose_info
 
 LIGHT_BLUE = (0.65098039, 0.74117647, 0.85882353)
 
