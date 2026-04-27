@@ -8,6 +8,7 @@ from torchvision.transforms import ToTensor
 from sam_3d_body.data.transforms import (
     Compose,
     GetBBoxCenterScale,
+    NormalizeKeypoint,
     TopdownAffine,
     VisionTransformWrapper,
 )
@@ -45,11 +46,13 @@ class SAM3DBodyEstimator:
         self.transform = Compose([
             GetBBoxCenterScale(),
             TopdownAffine(input_size=self.cfg.MODEL.IMAGE_SIZE, use_udp=False),
+            NormalizeKeypoint(),
             VisionTransformWrapper(ToTensor()),
         ])
         self.transform_hand = Compose([
             GetBBoxCenterScale(padding=0.9),
             TopdownAffine(input_size=self.cfg.MODEL.IMAGE_SIZE, use_udp=False),
+            NormalizeKeypoint(),
             VisionTransformWrapper(ToTensor()),
         ])
 
@@ -65,6 +68,10 @@ class SAM3DBodyEstimator:
         nms_thr: float = 0.3,
         use_mask: bool = False,
         inference_type: str = "full",
+        # Keypoint conditioning parameters
+        keypoints_2d: np.ndarray | None = None,
+        keypoint_scores: np.ndarray | None = None,
+        keypoint_format: str = "coco17",
     ):
         """
         Perform model prediction in top-down format: assuming input is a full image.
@@ -73,6 +80,13 @@ class SAM3DBodyEstimator:
             img: Input image (path or numpy array)
             bboxes: Optional pre-computed bounding boxes
             masks: Optional pre-computed masks (numpy array). If provided, SAM2 will be skipped.
+            cam_int: Optional camera intrinsics [3, 3]
+            keypoints_2d: Optional 2D keypoints [N, K, 2] or [N, K, 3] where K is number of keypoints
+                          Coordinates should be in pixel space (not normalized)
+                          If shape is [N, K, 3], third dimension is confidence score
+            keypoint_scores: Optional keypoint confidence scores [N, K].
+                            If keypoints_2d has shape [N, K, 3], this is ignored.
+            keypoint_format: Format of keypoints (e.g., 'coco17', 'coco133', 'halpe26')
             det_cat_id: Detection category ID
             bbox_thr: Bounding box threshold
             nms_thr: NMS threshold
@@ -97,6 +111,13 @@ class SAM3DBodyEstimator:
             image_format = "rgb"
         height, width = img.shape[:2]
 
+        # Process keypoint inputs
+        use_keypoints = keypoints_2d is not None
+        if use_keypoints:
+            keypoints_2d, keypoint_scores = self._process_keypoint_inputs(
+                keypoints_2d, keypoint_scores, keypoint_format, height, width
+            )
+
         if bboxes is not None:
             boxes = bboxes.reshape(-1, 4)
             self.is_crop = True
@@ -104,7 +125,6 @@ class SAM3DBodyEstimator:
             if image_format == "rgb":
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
                 image_format = "bgr"
-            print("Running object detector...")
             boxes = self.detector.run_human_detection(
                 img,
                 det_cat_id=det_cat_id,
@@ -112,7 +132,11 @@ class SAM3DBodyEstimator:
                 nms_thr=nms_thr,
                 default_to_full_image=False,
             )
-            print("Found boxes:", boxes)
+            self.is_crop = True
+        elif use_keypoints:
+            assert keypoints_2d is not None
+            assert keypoint_scores is not None
+            boxes = self._create_bboxes_from_keypoints(keypoints_2d, keypoint_scores)
             self.is_crop = True
         else:
             boxes = np.array([0, 0, width, height]).reshape(1, 4)
@@ -121,6 +145,12 @@ class SAM3DBodyEstimator:
         # If there are no detected humans, don't run prediction
         if len(boxes) == 0:
             return []
+
+        if use_keypoints and len(keypoints_2d) != len(boxes):
+            raise ValueError(
+                f"Mismatch between number of keypoint sets ({len(keypoints_2d)}) and "
+                f"detected/provided boxes ({len(boxes)}). Matching is not supported."
+            )
 
         # The following models expect RGB images instead of BGR
         if image_format == "bgr":
@@ -147,7 +177,17 @@ class SAM3DBodyEstimator:
             masks, masks_score = None, None
 
         #################### Construct batch data samples ####################
-        batch = prepare_batch(img, self.transform, boxes, masks, masks_score)
+        # Pass keypoints to prepare_batch
+        batch = prepare_batch(
+            img,
+            self.transform,
+            boxes,
+            masks,
+            masks_score,
+            keypoints_2d=keypoints_2d if use_keypoints else None,
+            keypoint_scores=keypoint_scores if use_keypoints else None,
+            keypoint_format="mhr70" if use_keypoints else None,
+        )
 
         #################### Run model inference on an image ####################
         batch = recursive_to(batch, "cuda")
@@ -245,3 +285,140 @@ class SAM3DBodyEstimator:
                 ])
 
         return all_out
+
+    def _process_keypoint_inputs(
+        self,
+        keypoints_2d: np.ndarray,
+        keypoint_scores: np.ndarray | None,
+        keypoint_format: str,
+        height: int,
+        width: int,
+    ):
+        """
+        Process and validate keypoint inputs.
+
+        Args:
+            keypoints_2d: Input keypoints [N, K, 2] or [N, K, 3]
+            keypoint_scores: Optional scores [N, K]
+            keypoint_format: Format of keypoints (e.g., 'coco17', 'coco133')
+            height: Image height
+            width: Image width
+
+        Returns:
+            Tuple of (processed_keypoints, scores)
+        """
+        # Ensure keypoints are in the right shape
+        if len(keypoints_2d.shape) == 2:
+            # Single person: [K, 2] or [K, 3]
+            keypoints_2d = keypoints_2d[np.newaxis, ...]
+
+        assert len(keypoints_2d.shape) == 3, (
+            f"Keypoints should be [N, K, 2] or [N, K, 3], got {keypoints_2d.shape}"
+        )
+
+        num_people, num_keypoints, coord_dim = keypoints_2d.shape
+
+        # Extract confidence scores if they're in the keypoint array
+        if coord_dim == 3:
+            if keypoint_scores is None:
+                keypoint_scores = keypoints_2d[:, :, 2]
+            keypoints_2d = keypoints_2d[:, :, :2]
+
+        # If no scores provided, use uniform confidence
+        if keypoint_scores is None:
+            keypoint_scores = np.ones((num_people, num_keypoints), dtype=np.float32)
+
+        # Ensure scores are 2D
+        if len(keypoint_scores.shape) == 1:
+            keypoint_scores = keypoint_scores[np.newaxis, ...]
+
+        # Map keypoint format to mhr70
+        format_mappings = {
+            "coco17": {
+                # MHR 9/10 are left/right hips, map the rest to best approximations
+                11: 9, 12: 10,  # hips
+                5: 5, 6: 6,     # shoulders
+                7: 7, 8: 8,     # elbows
+                9: 11, 10: 12,  # wrists
+                13: 13, 14: 14, # knees
+                15: 41, 16: 62, # ankles
+            },
+            "mhr70": {i: i for i in range(70)}
+        }
+        
+        if keypoint_format in format_mappings:
+            mapping = format_mappings[keypoint_format]
+            new_keypoints = np.zeros((num_people, 70, 2), dtype=keypoints_2d.dtype)
+            new_scores = np.zeros((num_people, 70), dtype=keypoint_scores.dtype)
+            for src_idx, dst_idx in mapping.items():
+                if src_idx < num_keypoints:
+                    new_keypoints[:, dst_idx] = keypoints_2d[:, src_idx]
+                    new_scores[:, dst_idx] = keypoint_scores[:, src_idx]
+            keypoints_2d = new_keypoints
+            keypoint_scores = new_scores
+
+        # Nullify confidence for out-of-bounds keypoints instead of silently clipping
+        out_of_bounds = (
+            (keypoints_2d[:, :, 0] < 0) | (keypoints_2d[:, :, 0] > width) |
+            (keypoints_2d[:, :, 1] < 0) | (keypoints_2d[:, :, 1] > height)
+        )
+        keypoint_scores[out_of_bounds] = 0.0
+
+        # Validate keypoint coordinates are within image bounds
+        keypoints_2d = np.clip(keypoints_2d, 0, [width, height])
+
+        return keypoints_2d, keypoint_scores
+
+    def _create_bboxes_from_keypoints(
+        self,
+        keypoints_2d: np.ndarray,
+        keypoint_scores: np.ndarray,
+        score_threshold: float = 0.3,
+        padding_factor: float = 0.15,
+    ):
+        """
+        Create bounding boxes from 2D keypoints.
+
+        Args:
+            keypoints_2d: Keypoints [N, K, 2]
+            keypoint_scores: Scores [N, K]
+            score_threshold: Minimum score for valid keypoint
+            padding_factor: Padding to add around keypoints (as fraction of bbox size)
+
+        Returns:
+            Bounding boxes [N, 4] in format [x1, y1, x2, y2]
+        """
+        num_people = keypoints_2d.shape[0]
+        bboxes = []
+
+        for i in range(num_people):
+            kpts = keypoints_2d[i]
+            scores = keypoint_scores[i]
+
+            # Filter valid keypoints
+            valid_mask = scores > score_threshold
+            if not np.any(valid_mask):
+                # If no valid keypoints, use all keypoints with lower confidence
+                valid_mask = np.ones(len(scores), dtype=bool)
+
+            valid_kpts = kpts[valid_mask]
+
+            # Get bounding box
+            x_min = np.min(valid_kpts[:, 0])
+            y_min = np.min(valid_kpts[:, 1])
+            x_max = np.max(valid_kpts[:, 0])
+            y_max = np.max(valid_kpts[:, 1])
+
+            # Add padding
+            box_w = x_max - x_min
+            box_h = y_max - y_min
+            padding = padding_factor * max(box_w, box_h)
+
+            x_min = max(0, x_min - padding)
+            y_min = max(0, y_min - padding)
+            x_max = x_max + padding
+            y_max = y_max + padding
+
+            bboxes.append([x_min, y_min, x_max, y_max])
+
+        return np.array(bboxes)
