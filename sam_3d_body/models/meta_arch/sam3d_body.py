@@ -1589,6 +1589,9 @@ class SAM3DBody(BaseModel):
 
         ########################################################
 
+        # Save pred_pose_raw from body pass before it gets zeroed by the re-run
+        pred_pose_raw_body = pose_output["mhr"]["pred_pose_raw"].detach().clone()
+
         # Re-run forward
         with torch.no_grad():
             verts, j3d, jcoords, mhr_model_params, joint_global_rots = (
@@ -1613,8 +1616,8 @@ class SAM3DBody(BaseModel):
             pose_output["mhr"]["pred_keypoints_3d"] = j3d
             pose_output["mhr"]["pred_vertices"] = verts
             pose_output["mhr"]["pred_joint_coords"] = jcoords
-            pose_output["mhr"]["pred_pose_raw"][...] = (
-                0  # pred_pose_raw is not valid anymore
+            pose_output["mhr"]["pred_pose_raw"] = (
+                pred_pose_raw_body  # preserve body-pass pred_pose_raw
             )
             pose_output["mhr"]["mhr_model_params"] = mhr_model_params
 
