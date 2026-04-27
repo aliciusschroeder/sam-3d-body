@@ -1,0 +1,52 @@
+[build-system]
+requires = ["uv_build>=0.11.7,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "sam_3d_body"
+module-root = ""
+
+[project]
+name = "sam-3d-body"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "torch==2.11.0",
+    "torchvision==0.26.0",
+    "setuptools==81.0.0",
+    "opencv-python>=4.13.0.92",
+    "numpy>=2.4.4",
+    "pillow>=12.2.0",
+    "roma>=1.5.6",
+    "einops>=0.8.2",
+    "yacs>=0.1.8",
+    "omegaconf>=2.3.0",
+    "ultralytics>=8.4.41",
+]
+
+[dependency-groups]
+dev = [
+    "ipywidgets",
+    "jupyterlab",
+    "pyrefly>=0.62.0",
+    "ruff>=0.15.12",
+    "tqdm>=4.67.3",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu130" }
+torchvision = { index = "pytorch-cu130" }
+
+[tool.uv]
+default-groups = "all"
+index-strategy = "unsafe-best-match"
+
+[tool.pyrefly]
+project-includes = ["sam_3d_body/**/*.py*"]
+
+[tool.ruff]
+preview = true
