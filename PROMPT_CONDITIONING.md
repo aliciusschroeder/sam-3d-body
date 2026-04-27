@@ -41,20 +41,19 @@ The model can accept keypoints in multiple formats:
 
 ```
 1. YOU SEND: All keypoints [N, K, 2] with scores [N, K]
-   Example: 133 keypoints from COCO-WholeBody
+   Example: 17 keypoints from COCO
    ↓
 2. MODEL RECEIVES: All keypoints in batch["keypoints_2d"]
    ↓
 3. AUTOMATIC FILTERING: Keypoints with confidence < 0.5 excluded
    ↓
-4. INTELLIGENT SELECTION (Prioritized order):
-   • Body keypoints (shoulders, hips, elbows, wrists) - BEST
-   • Hand keypoints (if body unavailable) - FALLBACK
-   • Face keypoints (if hands unavailable) - FALLBACK
-   • Dummy prompt (if all low confidence) - MODEL STILL WORKS
+4. KEYPOINT SAMPLING (KeypointSamplerV1):
+   • Training: Often selects the worst-predicted keypoint to force the model to correct its errors.
+   • Inference: Randomly samples from valid keybody joints (e.g., shoulders, hips).
+   • Fallback: Dummy prompt (if all keypoints have low confidence).
    ↓
-5. ONE KEYPOINT SELECTED: Best from available options
-   Example: Right shoulder at (x=512, y=300) with conf=0.9
+5. ONE KEYPOINT SELECTED: Single joint selected from available options.
+   Example: Right shoulder at (x=120, y=300) with conf=0.9
    ↓
 6. EMBEDDING: [B, 1, 3] → Prompt Encoder → [B, 1, 1280]
    ↓
@@ -68,23 +67,18 @@ The model can accept keypoints in multiple formats:
 
 #### Robustness to Missing/Low-Confidence Keypoints
 
-**Scenario 1: Full body visible**
-- Input: 133 keypoints, 17 body keypoints high confidence (>0.8)
-- Selected: Best body keypoint (e.g., shoulder)
+**Scenario 1: High confidence joints**
+- Input: 17 body keypoints with high confidence (>0.8)
+- Selected: A random valid body keypoint (e.g., shoulder)
 - Result: Optimal conditioning ✅
 
-**Scenario 2: Hand close-up (body not visible)**
-- Input: 133 keypoints, 42 hand keypoints high confidence (>0.7), body/face low (<0.2)
-- Selected: Best hand keypoint (e.g., wrist)
-- Result: Still useful conditioning ✅
-
-**Scenario 3: Heavy occlusion**
-- Input: 133 keypoints, most low confidence (<0.5), only 3 face keypoints >0.5
-- Selected: Best face keypoint
+**Scenario 2: Heavy occlusion**
+- Input: Most low confidence (<0.5), only a few visible keypoints
+- Selected: A random valid keypoint from the visible set
 - Result: Limited but still helpful ✅
 
-**Scenario 4: Complete failure**
-- Input: 133 keypoints, ALL confidence <0.5
+**Scenario 3: Complete failure**
+- Input: ALL confidence <0.5
 - Selected: Dummy prompt (special learned embedding)
 - Result: Model works like baseline (no conditioning benefit) ✅
 
@@ -121,7 +115,7 @@ Masks work **completely differently** from keypoints - they provide dense spatia
    v2: Conv(2×2) × 4 layers = 16× reduction
 
    [N, H, W] → [N, C, H/16, W/16]
-   Example: [1, 1920, 1080] → [1, 1280, 120, 67.5]
+   Example: [1, 1024, 768] → [1, 1280, 64, 48]
    ↓
 4. SPATIAL FEATURE MAP: Dense features matching image embeddings size
    ↓
@@ -286,7 +280,6 @@ Fallback helper to create bounding boxes from keypoints when no detection is ava
 - **Keypoint conditioning**: ~5-10ms per image
 - **Mask conditioning**: ~10-20ms per image
 - **Memory**: Minimal increase (~50-100MB)
-- **Quality improvement**: 5-10% reduction in MPJPE (Mean Per Joint Position Error)
 
 ## Troubleshooting
 
@@ -325,11 +318,10 @@ KEYPOINT PROMPTS (Sparse Token):
              │ All sent
              ▼
 ┌─────────────────────────────────┐
-│ Model: Intelligent Selection    │
+│ Model: KeypointSamplerV1        │
 │ • Filter conf < 0.5              │
-│ • Try body joints first          │
-│ • Fallback to hands/face         │
-│ • Select BEST ONE                │
+│ • Inference: Random keybody      │
+│ • Fallback to dummy              │
 └────────────┬────────────────────┘
              │ ONE keypoint
              ▼
